@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Checklist UI</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f172a, #111827);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .wrapper {
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .title {
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        #container {
+            width: 100%;
+            background: rgba(17, 24, 39, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 30px;
+            border-radius: 24px;
+
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+            gap: 18px;
+
+            backdrop-filter: blur(10px);
+
+            box-shadow:
+                0 10px 25px rgba(0, 0, 0, 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+
+        #container input[type="checkbox"] {
+            appearance: none;
+            width: 30px;
+            height: 30px;
+
+            border-radius: 10px;
+            border: 2px solid #334155;
+
+            background: #1e293b;
+
+            cursor: pointer;
+
+            transition:
+                transform 0.2s ease,
+                background 0.2s ease,
+                border-color 0.2s ease,
+                box-shadow 0.2s ease;
+
+            position: relative;
+            margin: auto;
+        }
+
+        #container input[type="checkbox"]:hover {
+            transform: scale(1.08);
+            border-color: #38bdf8;
+
+            box-shadow:
+                0 0 12px rgba(56, 189, 248, 0.4);
+        }
+
+        #container input[type="checkbox"]:checked {
+            background: #22c55e;
+            border-color: #22c55e;
+        }
+
+        #container input[type="checkbox"]:checked::after {
+            content: "✔";
+
+            position: absolute;
+            top: 50%;
+            left: 50%;
+
+            transform: translate(-50%, -58%);
+
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 20px;
+            }
+
+            .title {
+                font-size: 24px;
+            }
+
+            #container {
+                padding: 20px;
+                gap: 14px;
+                grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+            }
+
+            #container input[type="checkbox"] {
+                width: 26px;
+                height: 26px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="wrapper">
+        <h1 class="title">Realtime Checklist</h1>
+
+        <div id="container"></div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script>
+        const socket = io();
+
+        const container = document.getElementById('container')
+
+        const CHECK_BOX = 100
+
+        
+
+        socket.on('server:checkbox:change',(data)=>{
+            console.log('socket server emit',data)
+            const {index,checked}= data;
+            const input =document.getElementById(`change ${index}`)
+            if(input){
+                input.checked=checked;
+            }
+        })
+
+        window.addEventListener('load',async()=>{
+            const response = await fetch('/checkbox',{method:'GET'})
+            const data =await response.json()
+            if(data && data.checkbox){
+                data.checkbox.forEach((serverupdate,index)=>{
+                    const input = document.createElement('input')
+                    input.type = "checkbox"
+                    input.checked=serverupdate;
+                    input.id=`change ${index}`
+                    input.addEventListener('change',(event)=>{
+                const checked = event.target.checked
+                console.log('changed',{index,checked})
+                socket.emit('client:checkbox:change',{index,checked}
+                )
+            })
+            container.appendChild(input)
+            })
+        }
+        })
+
+        new Array(CHECK_BOX).fill(null).forEach((_, index) => {
+
+            // const input = document.createElement('input')
+
+            // input.type = "checkbox"
+            // input.id=`change ${index}`
+            // input.addEventListener('change',(event)=>{
+            //     const checked = event.target.checked
+            //     console.log('changed',{index,checked})
+            //     socket.emit('client:checkbox:change',{index,checked}
+            //     )
+            // })
+
+            // container.appendChild(input)
+        })
+    </script>
+
+</body>
+</html>
